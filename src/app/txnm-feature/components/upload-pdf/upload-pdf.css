@@ -1,0 +1,9 @@
+.country-row {
+    display: flex;       /* Arranges the label and ng-select side by side (horizontally) */
+    align-items: center; /* Vertically centers the label and dropdown within the row */
+    margin-bottom: 1rem; /* Adds space below the row for visual separation from other fields */
+  }
+  
+  .country-row label {
+    margin-bottom: 0;        /* Removes the default bottom margin from the label for better vertical alignment */
+  }

@@ -1,0 +1,16 @@
+.demo-header {
+    background: #f0f4fa;
+    padding: 8px 12px;
+    border-bottom: 1px solid #cce;
+    font-weight: bold;
+  }
+  .demo-main {
+    padding: 12px;
+  }
+  .demo-footer {
+    background: #f8f9fb;
+    padding: 8px 12px;
+    border-top: 1px solid #cce;
+    font-size: 0.95em;
+    color: #555;
+  } 

@@ -1,0 +1,74 @@
+<header class="header">
+  <div class="header-content">
+    <!-- Logo/Brand -->
+    <div class="logo">
+      <button class="logo-button" (click)="navigateTo('/txnm')">
+        <mat-icon>account_balance</mat-icon>
+        <span class="logo-text">TXNM</span>
+      </button>
+    </div>
+
+    <!-- Navigation Menu -->
+    <nav class="nav-menu">
+      <button 
+        *ngFor="let item of menuItems"
+        class="nav-button"
+        [class.active]="isActiveRoute(item.route)"
+        (click)="navigateTo(item.route)"
+        [attr.aria-label]="item.label">
+        <mat-icon>{{ item.icon }}</mat-icon>
+        <span class="nav-label">{{ item.label }}</span>
+      </button>
+    </nav>
+
+    <!-- User Status Section -->
+    <div class="user-section">
+      <div class="user-info" *ngIf="isAuthenticated">
+        <div class="user-details">
+          <span class="user-name">{{ getUserDisplayName() }}</span>
+          <span class="user-type">{{ getUserTypeDisplay() }}</span>
+        </div>
+        <button 
+          class="logout-button" 
+          (click)="logout()"
+          mat-icon-button
+          matTooltip="Logout">
+          <mat-icon>logout</mat-icon>
+        </button>
+      </div>
+      
+      <div class="guest-info" *ngIf="!isAuthenticated">
+        <span class="guest-text">Guest User</span>
+        <button 
+          class="login-button" 
+          (click)="navigateTo('/txnm/login')"
+          mat-stroked-button>
+          Login
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Menu Toggle -->
+    <button 
+      class="mobile-menu-toggle"
+      mat-icon-button
+      (click)="toggleMobileMenu()"
+      [attr.aria-label]="'Toggle mobile menu'">
+      <mat-icon>{{ isMobileMenuOpen ? 'close' : 'menu' }}</mat-icon>
+    </button>
+  </div>
+
+  <!-- Mobile Navigation Menu -->
+  <div class="mobile-menu" [class.open]="isMobileMenuOpen">
+    <nav class="mobile-nav">
+      <button 
+        *ngFor="let item of menuItems"
+        class="mobile-nav-button"
+        [class.active]="isActiveRoute(item.route)"
+        (click)="navigateTo(item.route)">
+        <mat-icon>{{ item.icon }}</mat-icon>
+        <span>{{ item.label }}</span>
+      </button>
+    </nav>
+  </div>
+</header>

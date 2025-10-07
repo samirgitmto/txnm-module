@@ -1,0 +1,43 @@
+<div class="placeholder-container">
+  <div class="placeholder-content">
+    <mat-icon class="placeholder-icon">analytics</mat-icon>
+    <h1>Analytics Dashboard</h1>
+    <p class="placeholder-description">
+      Advanced analytics and insights for your financial transactions. Coming soon with interactive charts and detailed reports.
+    </p>
+    
+    <div class="analytics-info" *ngIf="transactions.length > 0">
+      <div class="info-card">
+        <mat-icon>receipt</mat-icon>
+        <div>
+          <h3>{{ getTotalCount() }}</h3>
+          <p>Transactions Ready for Analysis</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="placeholder-features">
+      <h3>Analytics Features (Coming Soon):</h3>
+      <ul>
+        <li>Interactive spending charts</li>
+        <li>Daily, weekly, and monthly trends</li>
+        <li>Category-wise spending analysis</li>
+        <li>Income vs expense visualization</li>
+        <li>Custom date range filtering</li>
+        <li>Exportable reports</li>
+        <li>Spending pattern insights</li>
+      </ul>
+    </div>
+
+    <div class="placeholder-actions">
+      <button class="transactions-button" (click)="goToTransactions()" *ngIf="transactions.length > 0">
+        <mat-icon>list</mat-icon>
+        <span>View Transactions</span>
+      </button>
+      <button class="back-button" (click)="goHome()">
+        <mat-icon>arrow_back</mat-icon>
+        <span>Back to Home</span>
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,106 @@
+<!-- Content Projection: Header Area -->
+<div class="upload-header">
+  <ng-content select="[upload-header]"></ng-content>
+</div>
+
+<!-- ContentProjComponent as child to demonstrate content projection -->
+<app-content-proj>
+  <p>This is projected from UploadPDF into ContentProj!</p>
+  <button (click)="showAlert()">Click Me</button>
+</app-content-proj>
+
+<!--
+  Simple Angular template-driven form example
+  - Uses [(ngModel)] for two-way data binding
+  - Handles form submission with (ngSubmit)
+  - Shows how to access form values and the $event object
+-->
+
+<form #uploadForm="ngForm" (ngSubmit)="onSubmit(uploadForm, $event)">
+  <!-- <label for="userId">Username*</label> -->
+  <label>Username*</label>
+
+  <input
+    type="text"
+    id="userId"
+    name="username"
+    [(ngModel)]="formData.username"
+    required
+    minlength="3"
+    placeholder="Enter your username"
+  />
+
+  <!-- Email Field -->
+  <label for="emailId">Email*</label>
+  <input
+    type="email"
+    id="emailId"
+    name="email"
+    [(ngModel)]="formData.email"
+    required
+    placeholder="user@example.com"
+  />
+
+  <!-- Password Field -->
+  <label for="passwordId">Password*</label>
+  <input
+    type="password"
+    id="passwordId"
+    name="password"
+    [(ngModel)]="formData.password"
+    required
+    placeholder="Enter password"
+  />
+
+  <!-- File Upload Field -->
+  <label for="fileId">Profile Picture</label>
+  <input
+    type="file"
+    id="fileId"
+    name="avatar"
+    (change)="onFileSelected($event)"
+    accept="image/*"
+  />
+
+  <div class="form-group country-row">
+    <!--
+    'for="country-id"' links the label to the ng-select input by id for accessibility.
+    'style' adds spacing and minimum width for better alignment.
+  -->
+    <label for="country-id" style="margin-right: 10px; min-width: 80px;">Country</label>
+    <ng-select
+      id="country-id"
+      name="country"
+      [items]="countries"
+      bindLabel="name"
+      bindValue="code"
+      [(ngModel)]="formData.country"
+      placeholder="Select a country"
+      required
+      style="flex: 1;"
+    > <!--style="flex: 1;" makes the dropdown stretch to fill the available space in the row,
+     keeping your form layout clean and responsive!-->
+    </ng-select>
+  </div>
+
+  <p>Selected country code: {{ formData.country }}</p>
+
+
+  <!-- Submit Button -->
+  <button type="submit" [disabled]="!uploadForm.form.valid">Register</button>
+</form>
+
+<!-- Display form data for learning/demo purposes -->
+<div *ngIf="formData">
+  <h3>Form Data (for demo):</h3>
+  <pre>{{ formData | json }}</pre>
+</div>
+
+
+<!-- Content Projection: Default (any content not matching other selectors) -->
+<!-- <div class="default-content">
+  <ng-content></ng-content>
+</div> -->
+
+<input [(ngModel)]="parentValue" placeholder="Type something" />
+<app-content-proj [value]="parentValue">dsfsd</app-content-proj>

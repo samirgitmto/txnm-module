@@ -35,6 +35,8 @@
               }
             ],
             "styles": [
+              "src/custom-theme.scss",
+              "node_modules/@ng-select/ng-select/themes/default.theme.css",
               "src/styles.css"
             ]
           },
