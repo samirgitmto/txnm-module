@@ -1,0 +1,68 @@
+<div class="chart-container-wrapper">
+  <!-- Chart Header -->
+  <div class="chart-header" *ngIf="title || showToolbar">
+    <div class="chart-title-section">
+      <h3 class="chart-title" *ngIf="title">{{ title }}</h3>
+      <p class="chart-subtitle" *ngIf="subtitle">{{ subtitle }}</p>
+    </div>
+    
+    <div class="chart-toolbar" *ngIf="showToolbar">
+      <button mat-icon-button (click)="refreshChart()" matTooltip="Refresh Chart">
+        <mat-icon>refresh</mat-icon>
+      </button>
+      <button mat-icon-button (click)="toggleLegend()" matTooltip="Toggle Legend">
+        <mat-icon>{{ showLegend ? 'visibility' : 'visibility_off' }}</mat-icon>
+      </button>
+      <button mat-icon-button (click)="exportChart()" matTooltip="Export Chart">
+        <mat-icon>download</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="chart-loading" *ngIf="isLoading">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Loading chart data...</p>
+  </div>
+
+  <!-- Error State -->
+  <div class="chart-error" *ngIf="errorMessage && !isLoading">
+    <mat-icon class="error-icon">error_outline</mat-icon>
+    <h4>Chart Error</h4>
+    <p>{{ getErrorMessage() }}</p>
+  </div>
+
+  <!-- Chart Content -->
+  <div class="chart-content" *ngIf="!isLoading && !errorMessage">
+    
+    <!-- No Data State -->
+    <div class="chart-no-data" *ngIf="!hasData()">
+      <mat-icon class="no-data-icon">bar_chart</mat-icon>
+      <h4>No Data Available</h4>
+      <p>There's no data to display in this chart.</p>
+    </div>
+
+    <!-- Chart Canvas -->
+    <div class="chart-canvas-container" *ngIf="hasData()" [style.height]="getChartHeight()">
+      <canvas 
+        baseChart
+        [data]="chartData"
+        [options]="chartOptions"
+        [type]="chartType"
+        (chartClick)="onChartClickEvent($event)"
+        (chartHover)="onChartHoverEvent($event)"
+        #chartRef>
+      </canvas>
+    </div>
+
+  </div>
+
+  <!-- Chart Footer -->
+  <div class="chart-footer" *ngIf="hasData() && !isLoading && !errorMessage">
+    <div class="chart-info">
+      <small class="chart-info-text">
+        Click on chart elements for details • Hover for tooltips
+      </small>
+    </div>
+  </div>
+</div>

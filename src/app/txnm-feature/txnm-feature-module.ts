@@ -15,6 +15,9 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 
+// Chart.js Modules
+import { BaseChartDirective, provideCharts, withDefaultRegisterables } from 'ng2-charts';
+
 import { TxnmFeatureRoutingModule } from './txnm-feature-routing-module';
 import { TxnmFeature } from './txnm-feature';
 import { UploadPdf } from './components/upload-pdf/upload-pdf';
@@ -35,6 +38,9 @@ import { Businesses } from './components/pages/businesses/businesses';
 import { Register } from './components/pages/register/register';
 import { AboutUs } from './components/pages/about-us/about-us';
 import { Analytics } from './components/analytics/analytics';
+import { DailyAnalytics } from './components/analytics/daily-analytics/daily-analytics';
+import { SummaryCards } from './components/analytics/shared/summary-cards';
+import { ChartContainer } from './components/analytics/shared/chart-container';
 
 
 @NgModule({
@@ -49,10 +55,14 @@ import { Analytics } from './components/analytics/analytics';
     Businesses,
     Register,
     AboutUs,
-    Analytics
+    Analytics,
+    DailyAnalytics,
+    SummaryCards,
+    ChartContainer
   ],
   providers: [
-    TxnmApi
+    TxnmApi,
+    provideCharts(withDefaultRegisterables())
   ],
   imports: [
     CommonModule,
@@ -71,7 +81,8 @@ import { Analytics } from './components/analytics/analytics';
     MatIconModule,
     MatDialogModule,
     MatProgressSpinnerModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    BaseChartDirective
   ],
   exports: [
     TxnmFeature

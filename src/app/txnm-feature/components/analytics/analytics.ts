@@ -1,6 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { Transaction } from '../../models/api-response.model';
+import { TransactionService } from '../../services/transaction.service';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-analytics',
@@ -8,25 +10,43 @@ import { Transaction } from '../../models/api-response.model';
   templateUrl: './analytics.html',
   styleUrl: './analytics.css'
 })
-export class Analytics implements OnInit {
+export class Analytics implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
   transactions: Transaction[] = [];
+  isLoading = false;
+  errorMessage: string | null = null;
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private transactionService: TransactionService
+  ) {}
 
   ngOnInit(): void {
-    // Get transactions from router state
-    const navigation = this.router.getCurrentNavigation();
-    if (navigation?.extras?.state) {
-      this.transactions = navigation.extras.state['transactions'] || [];
-    }
+    this.loadTransactions();
+  }
 
-    // If no transactions in state, try to get from session storage
-    if (this.transactions.length === 0) {
-      const storedTransactions = sessionStorage.getItem('transactions');
-      if (storedTransactions) {
-        this.transactions = JSON.parse(storedTransactions);
-      }
-    }
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private loadTransactions(): void {
+    this.isLoading = true;
+    this.errorMessage = null;
+
+    // Fetch transactions from backend using session ID
+    this.transactionService.getTransactions()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (transactions) => {
+          this.transactions = transactions;
+          this.isLoading = false;
+        },
+        error: (error) => {
+          this.errorMessage = error.message || 'Failed to load transactions';
+          this.isLoading = false;
+        }
+      });
   }
 
   goHome(): void {
@@ -35,6 +55,12 @@ export class Analytics implements OnInit {
 
   goToTransactions(): void {
     this.router.navigate(['/txnm/transactions'], {
+      state: { transactions: this.transactions }
+    });
+  }
+
+  goToDailyAnalytics(): void {
+    this.router.navigate(['/txnm/analytics/daily'], {
       state: { transactions: this.transactions }
     });
   }

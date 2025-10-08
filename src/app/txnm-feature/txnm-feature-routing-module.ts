@@ -9,6 +9,8 @@ import { Businesses } from './components/pages/businesses/businesses';
 import { Register } from './components/pages/register/register';
 import { AboutUs } from './components/pages/about-us/about-us';
 import { Analytics } from './components/analytics/analytics';
+import { DailyAnalytics } from './components/analytics/daily-analytics/daily-analytics';
+import { DataGuard } from './guards/data.guard';
 
 const routes: Routes = [
   {
@@ -22,7 +24,8 @@ const routes: Routes = [
       { path: 'businesses', component: Businesses },
       { path: 'register', component: Register },
       { path: 'about', component: AboutUs },
-      { path: 'analytics', component: Analytics },
+      { path: 'analytics', component: Analytics, canActivate: [DataGuard] },
+      { path: 'analytics/daily', component: DailyAnalytics, canActivate: [DataGuard] },
       { path: '**', redirectTo: '' }
     ]
   }

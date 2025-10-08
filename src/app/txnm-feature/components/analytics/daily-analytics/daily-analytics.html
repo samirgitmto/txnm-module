@@ -1,0 +1,119 @@
+<div class="daily-analytics-container">
+  <!-- Header Section -->
+  <div class="analytics-header">
+    <div class="header-content">
+      <div class="title-section">
+        <mat-icon class="header-icon">trending_up</mat-icon>
+        <h1>Daily Analytics</h1>
+        <p class="subtitle">Daily transaction trends and insights</p>
+      </div>
+      <div class="header-actions">
+        <button mat-raised-button color="primary" (click)="refreshData()" [disabled]="isLoading">
+          <mat-icon>refresh</mat-icon>
+          Refresh
+        </button>
+        <button mat-stroked-button (click)="goBack()">
+          <mat-icon>arrow_back</mat-icon>
+          Back
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Loading analytics data...</p>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-container" *ngIf="errorMessage && !isLoading">
+    <mat-icon class="error-icon">error</mat-icon>
+    <h3>Unable to Load Analytics</h3>
+    <p>{{ errorMessage }}</p>
+    <button mat-raised-button color="primary" (click)="refreshData()">
+      <mat-icon>refresh</mat-icon>
+      Try Again
+    </button>
+  </div>
+
+  <!-- Analytics Content -->
+  <div class="analytics-content" *ngIf="!isLoading && !errorMessage && transactions.length > 0">
+    
+    <!-- Summary Cards -->
+    <app-summary-cards 
+      [transactions]="transactions"
+      [period]="'daily'"
+      [showTrends]="true">
+    </app-summary-cards>
+
+    <!-- Charts Section -->
+    <div class="charts-section">
+      
+      <!-- Net Amount Trend Chart -->
+      <app-chart-container
+        [chartType]="lineChartType"
+        [chartData]="lineChartData"
+        [chartOptions]="lineChartOptions"
+        [title]="'Daily Net Amount Trend'"
+        [subtitle]="'Track your daily financial position over time'"
+        [height]="'300px'"
+        [showToolbar]="true"
+        [onChartClick]="chartClicked"
+        [onChartHover]="chartHovered">
+      </app-chart-container>
+
+      <!-- Income vs Expenses Chart -->
+      <app-chart-container
+        [chartType]="barChartType"
+        [chartData]="barChartData"
+        [chartOptions]="barChartOptions"
+        [title]="'Daily Income vs Expenses'"
+        [subtitle]="'Compare daily income and expense patterns'"
+        [height]="'300px'"
+        [showToolbar]="true"
+        [onChartClick]="chartClicked"
+        [onChartHover]="chartHovered">
+      </app-chart-container>
+
+      <!-- Transaction Type Distribution -->
+      <app-chart-container
+        [chartType]="pieChartType"
+        [chartData]="pieChartData"
+        [chartOptions]="pieChartOptions"
+        [title]="'Transaction Type Distribution'"
+        [subtitle]="'Overall income vs expense breakdown'"
+        [height]="'250px'"
+        [showToolbar]="true"
+        [onChartClick]="chartClicked"
+        [onChartHover]="chartHovered">
+      </app-chart-container>
+
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+      <button mat-raised-button color="primary" (click)="goToTransactions()">
+        <mat-icon>list</mat-icon>
+        View All Transactions
+      </button>
+      <button mat-stroked-button (click)="goHome()">
+        <mat-icon>home</mat-icon>
+        Back to Home
+      </button>
+    </div>
+
+  </div>
+
+  <!-- No Data State -->
+  <div class="no-data-container" *ngIf="!isLoading && !errorMessage && transactions.length === 0">
+    <mat-icon class="no-data-icon">analytics</mat-icon>
+    <h3>No Transaction Data Available</h3>
+    <p>Upload your bank statement to see daily analytics and insights.</p>
+    <button mat-raised-button color="primary" (click)="goHome()">
+      <mat-icon>upload</mat-icon>
+      Upload Statement
+    </button>
+  </div>
+
+</div>

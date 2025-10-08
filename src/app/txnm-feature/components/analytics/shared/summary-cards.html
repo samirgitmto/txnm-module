@@ -1,0 +1,27 @@
+<div class="summary-cards-container">
+  <div class="summary-cards-grid">
+    <mat-card 
+      *ngFor="let card of summaryCards" 
+      [class]="getCardClass(card)"
+      class="summary-card">
+      
+      <mat-card-content>
+        <div class="card-header">
+          <div class="card-icon">
+            <mat-icon>{{ card.icon }}</mat-icon>
+          </div>
+          <div class="card-trend" *ngIf="card.trend">
+            <mat-icon [class]="getTrendClass(card.trend)">{{ getTrendIcon(card.trend) }}</mat-icon>
+            <span [class]="getTrendClass(card.trend)">{{ formatTrendValue(card.trend) }}</span>
+          </div>
+        </div>
+        
+        <div class="card-content">
+          <h3 class="card-value">{{ formatCurrency(card.value) }}</h3>
+          <p class="card-title">{{ card.title }}</p>
+          <small class="card-subtitle">{{ card.subtitle }}</small>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

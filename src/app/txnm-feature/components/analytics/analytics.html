@@ -3,41 +3,99 @@
     <mat-icon class="placeholder-icon">analytics</mat-icon>
     <h1>Analytics Dashboard</h1>
     <p class="placeholder-description">
-      Advanced analytics and insights for your financial transactions. Coming soon with interactive charts and detailed reports.
+      Advanced analytics and insights for your financial transactions. Interactive charts and detailed reports.
     </p>
     
-    <div class="analytics-info" *ngIf="transactions.length > 0">
-      <div class="info-card">
-        <mat-icon>receipt</mat-icon>
-        <div>
-          <h3>{{ getTotalCount() }}</h3>
-          <p>Transactions Ready for Analysis</p>
+    <!-- Loading State -->
+    <div class="loading-container" *ngIf="isLoading">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading analytics data...</p>
+    </div>
+
+    <!-- Error State -->
+    <div class="error-container" *ngIf="errorMessage && !isLoading">
+      <mat-icon class="error-icon">error</mat-icon>
+      <h3>Unable to Load Analytics</h3>
+      <p>{{ errorMessage }}</p>
+      <button mat-raised-button color="primary" (click)="goHome()">
+        <mat-icon>home</mat-icon>
+        Back to Home
+      </button>
+    </div>
+
+    <!-- Analytics Content -->
+    <div *ngIf="!isLoading && !errorMessage">
+      
+      <div class="analytics-info" *ngIf="transactions.length > 0">
+        <div class="info-card">
+          <mat-icon>receipt</mat-icon>
+          <div>
+            <h3>{{ getTotalCount() }}</h3>
+            <p>Transactions Ready for Analysis</p>
+          </div>
         </div>
       </div>
+
+      <div class="analytics-navigation" *ngIf="transactions.length > 0">
+        <h3>Available Analytics:</h3>
+        <div class="analytics-cards">
+          <div class="analytics-card" (click)="goToDailyAnalytics()">
+            <mat-icon>trending_up</mat-icon>
+            <h4>Daily Analytics</h4>
+            <p>Daily transaction trends and insights</p>
+            <span class="card-status">Available</span>
+          </div>
+          <div class="analytics-card disabled">
+            <mat-icon>bar_chart</mat-icon>
+            <h4>Weekly Analytics</h4>
+            <p>Weekly spending patterns and trends</p>
+            <span class="card-status">Coming Soon</span>
+          </div>
+          <div class="analytics-card disabled">
+            <mat-icon>pie_chart</mat-icon>
+            <h4>Five-Day Analytics</h4>
+            <p>Short-term trend analysis</p>
+            <span class="card-status">Coming Soon</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="placeholder-features">
+        <h3>Analytics Features:</h3>
+        <ul>
+          <li>Interactive spending charts</li>
+          <li>Daily transaction trends</li>
+          <li>Income vs expense visualization</li>
+          <li>Real-time data processing</li>
+          <li>Responsive chart design</li>
+          <li>Summary statistics</li>
+          <li>Exportable insights</li>
+        </ul>
+      </div>
+
+      <div class="placeholder-actions">
+        <button class="transactions-button" (click)="goToTransactions()" *ngIf="transactions.length > 0">
+          <mat-icon>list</mat-icon>
+          <span>View Transactions</span>
+        </button>
+        <button class="back-button" (click)="goHome()">
+          <mat-icon>arrow_back</mat-icon>
+          <span>Back to Home</span>
+        </button>
+      </div>
+
     </div>
 
-    <div class="placeholder-features">
-      <h3>Analytics Features (Coming Soon):</h3>
-      <ul>
-        <li>Interactive spending charts</li>
-        <li>Daily, weekly, and monthly trends</li>
-        <li>Category-wise spending analysis</li>
-        <li>Income vs expense visualization</li>
-        <li>Custom date range filtering</li>
-        <li>Exportable reports</li>
-        <li>Spending pattern insights</li>
-      </ul>
+    <!-- No Data State -->
+    <div class="no-data-container" *ngIf="!isLoading && !errorMessage && transactions.length === 0">
+      <mat-icon class="no-data-icon">analytics</mat-icon>
+      <h3>No Transaction Data Available</h3>
+      <p>Upload your bank statement to see analytics and insights.</p>
+      <button mat-raised-button color="primary" (click)="goHome()">
+        <mat-icon>upload</mat-icon>
+        Upload Statement
+      </button>
     </div>
 
-    <div class="placeholder-actions">
-      <button class="transactions-button" (click)="goToTransactions()" *ngIf="transactions.length > 0">
-        <mat-icon>list</mat-icon>
-        <span>View Transactions</span>
-      </button>
-      <button class="back-button" (click)="goHome()">
-        <mat-icon>arrow_back</mat-icon>
-        <span>Back to Home</span>
-      </button>
-    </div>
   </div>
 </div>

@@ -101,9 +101,9 @@ export class TxnmHome implements OnInit {
             duration: 3000
           });
           
-          // Navigate to transaction list with data
-          this.router.navigate(['/txnm/transactions'], {
-            state: { transactions, message: 'Transactions parsed successfully!' }
+          // Navigate to daily analytics by default after successful upload
+          this.router.navigate(['/txnm/analytics/daily'], {
+            state: { message: 'Transactions parsed successfully!' }
           });
         }
       } catch (error: any) {
