@@ -92,8 +92,8 @@ export class TxnmHome implements OnInit {
         const formData = this.uploadForm.value;
         const transactions = await this.transactionService.parseTransactions(
           this.selectedFile,
-          formData.statementKey,
-          formData.selectedBank
+          formData.statementKey,  // This will be used as password
+          formData.selectedBank    // This will be used as bankCode
         ).toPromise();
 
         if (transactions) {

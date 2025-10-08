@@ -53,11 +53,13 @@ export class TransactionService {
     return regex.test(key);
   }
 
-  parseTransactions(file: File, statementKey: string, bankCode: string): Observable<Transaction[]> {
+  parseTransactions(file: File, password: string, bankCode: string): Observable<Transaction[]> {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('statementKey', statementKey);
-    formData.append('bankCode', bankCode);
+    formData.append('password', password);
+    
+    // Send bank code in lowercase as expected by backend
+    formData.append('bankName', bankCode.toLowerCase());
     
     const sessionId = this.sessionService.getSessionId();
     if (sessionId) {
@@ -65,8 +67,9 @@ export class TransactionService {
     }
 
     console.log('Uploading file:', file.name);
-    console.log('Statement Key:', statementKey);
+    console.log('Password:', password);
     console.log('Bank Code:', bankCode);
+    console.log('Bank Name (sent to backend):', bankCode.toLowerCase());
     console.log('Session ID:', sessionId);
 
     return this.baseApi.postFormData<Transaction[]>('/transactions/parse', formData).pipe(
