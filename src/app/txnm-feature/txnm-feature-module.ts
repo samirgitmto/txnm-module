@@ -13,6 +13,8 @@ import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 
 // Chart.js Modules
@@ -29,7 +31,6 @@ import { ContentProj } from './components/upload-pdf/content-proj/content-proj';
 // Import our new services
 import { BaseApiService } from './services/base-api.service';
 import { AuthService } from './services/auth.service';
-import { SessionService } from './services/session.service';
 import { TransactionService } from './services/transaction.service';
 import { Header } from './components/header/header';
 import { TransactionList } from './components/transaction-list/transaction-list';
@@ -81,6 +82,8 @@ import { ChartContainer } from './components/analytics/shared/chart-container';
     MatIconModule,
     MatDialogModule,
     MatProgressSpinnerModule,
+    MatProgressBarModule,
+    MatChipsModule,
     MatSnackBarModule,
     BaseChartDirective
   ],

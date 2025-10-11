@@ -38,23 +38,21 @@ export class AuthService {
 
       const sessionId = this.sessionService.getSessionId();
       if (sessionId) {
-        const isValid = await this.sessionService.validateSession().toPromise();
-        if (isValid) {
-          const sessionInfo = this.sessionService.getSessionInfo();
-          if (sessionInfo) {
-            const user: User = {
-              id: 0, // This will be set by the backend
-              email: sessionInfo.email || null,
-              googleId: null,
-              fullName: sessionInfo.fullName || null,
-              userType: sessionInfo.userType,
-              sessionId: sessionInfo.sessionId,
-              lastLogin: new Date().toISOString(),
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            };
-            this.userSubject.next(user);
-          }
+        // SessionService now validates locally, so we can trust it
+        const sessionInfo = this.sessionService.getSessionInfo();
+        if (sessionInfo && this.sessionService.isSessionValid()) {
+          const user: User = {
+            id: 0, // This will be set by the backend
+            email: sessionInfo.email || null,
+            googleId: null,
+            fullName: sessionInfo.fullName || null,
+            userType: sessionInfo.userType,
+            sessionId: sessionInfo.sessionId,
+            lastLogin: new Date().toISOString(),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+          this.userSubject.next(user);
         } else {
           // Session is invalid, clear it
           await this.sessionService.deleteSession().toPromise();

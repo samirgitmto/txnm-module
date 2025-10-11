@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { BaseApiService } from './base-api.service';
-import { SessionService } from './session.service';
 
 @Injectable({
   providedIn: 'root'
@@ -10,8 +9,7 @@ import { SessionService } from './session.service';
 export class DataGuardService {
   
   constructor(
-    private baseApi: BaseApiService,
-    private sessionService: SessionService
+    private baseApi: BaseApiService
   ) {}
 
   /**
@@ -19,7 +17,8 @@ export class DataGuardService {
    * Since we just parsed transactions successfully, we can assume data exists
    */
   hasTransactionData(): Observable<boolean> {
-    const sessionId = this.sessionService.getSessionId();
+    // Check if session ID exists in localStorage
+    const sessionId = localStorage.getItem('txnm_session_id');
     
     if (!sessionId) {
       console.log('No session ID found');

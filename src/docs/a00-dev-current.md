@@ -18,7 +18,7 @@
 
 ## Phase 2: Services Layer ✅ COMPLETE
 - [x] Create BaseApiService (HTTP client with error handling and interceptors)
-- [x] Create SessionService (guest session management, validation, refresh)
+- [x] Create SessionService (local session management, validation, refresh)
 - [x] Create TransactionService (bank configs, file upload, parsing, validation)
 - [x] Create AuthService (authentication state management)
 - [x] Create TypeScript models (Transaction, BankConfig, SessionInfo, ApiResponse, User)
@@ -29,7 +29,7 @@
 ## Phase 3: Component Architecture ✅ COMPLETE
 ### 3A: Enhanced Existing Components ✅ COMPLETE
 - [x] Enhance TxnmHome component with transaction upload functionality
-- [x] Integrate services (AuthService, TransactionService, SessionService)
+- [x] Integrate services (AuthService, TransactionService)
 - [x] Add reactive forms for bank selection and statement key validation
 - [x] Implement PDF file upload with validation and error handling
 - [x] Add Material Design form controls and error handling

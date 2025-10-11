@@ -1,14 +1,14 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { Observable, interval, timer } from 'rxjs';
+import { map, catchError, switchMap, filter, take, timeout, tap, startWith } from 'rxjs/operators';
 import { BaseApiService } from './base-api.service';
-import { SessionService } from './session.service';
-import { Transaction, ApiResponse, BankConfig } from '../models/api-response.model';
+import { Transaction, ApiResponse, BankConfig, SpendingInsights, AnalysisStatus, AnalysisProgress, AnalysisRequest, AnalysisError, KafkaAnalysisResponse } from '../models/api-response.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TransactionService {
+  private sessionId: string | null = null;
   private readonly bankConfigs: { [key: string]: BankConfig } = {
     'HDFC': {
       name: 'HDFC Bank',
@@ -37,9 +37,30 @@ export class TransactionService {
   };
 
   constructor(
-    private baseApi: BaseApiService,
-    private sessionService: SessionService
-  ) {}
+    private baseApi: BaseApiService
+  ) {
+    this.initializeSession();
+  }
+
+  private initializeSession(): void {
+    // Generate or retrieve session ID from localStorage
+    const storedSessionId = localStorage.getItem('txnm_session_id');
+    if (storedSessionId) {
+      this.sessionId = storedSessionId;
+    } else {
+      this.sessionId = this.generateUUID();
+      localStorage.setItem('txnm_session_id', this.sessionId);
+    }
+    console.log('TransactionService initialized with session:', this.sessionId);
+  }
+
+  private generateUUID(): string {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
 
   getBankConfigs(): { [key: string]: BankConfig } {
     return this.bankConfigs;
@@ -61,7 +82,7 @@ export class TransactionService {
     // Send bank code in lowercase as expected by backend
     formData.append('bankName', bankCode.toLowerCase());
     
-    const sessionId = this.sessionService.getSessionId();
+    const sessionId = this.sessionId;
     if (sessionId) {
       formData.append('sessionId', sessionId);
     }
@@ -88,7 +109,7 @@ export class TransactionService {
   }
 
   getTransactions(): Observable<Transaction[]> {
-    const sessionId = this.sessionService.getSessionId();
+    const sessionId = this.sessionId;
     if (!sessionId) {
       throw new Error('No active session');
     }
@@ -108,7 +129,7 @@ export class TransactionService {
   }
 
   getTransactionAnalytics(period: 'daily' | 'weekly' | 'five-day'): Observable<any> {
-    const sessionId = this.sessionService.getSessionId();
+    const sessionId = this.sessionId;
     if (!sessionId) {
       throw new Error('No active session');
     }
@@ -123,6 +144,212 @@ export class TransactionService {
       catchError(error => {
         console.error('Error fetching analytics:', error);
         throw error;
+      })
+    );
+  }
+
+  getAISpendingInsights(): Observable<SpendingInsights> {
+    const sessionId = this.sessionId;
+    if (!sessionId) {
+      throw new Error('No active session');
+    }
+
+    console.log('Requesting AI spending insights for session:', sessionId);
+
+    return this.baseApi.post<SpendingInsights>(`/txnm/ai/analyze-spending?sessionId=${sessionId}`, {}).pipe(
+      map(response => {
+        if (response.success && response.data) {
+          console.log('AI insights received successfully:', response.data);
+          return response.data;
+        }
+        throw new Error(response.message || 'Failed to get AI insights');
+      }),
+      catchError(error => {
+        console.error('Error fetching AI insights:', error);
+        throw error;
+      })
+    );
+  }
+
+  // ===== NEW ASYNC KAFKA-BASED METHODS =====
+
+  /**
+   * Send AI analysis request via Kafka (async processing)
+   * Returns requestId for tracking
+   */
+  sendAIAnalysisRequest(sessionId?: string): Observable<{requestId: string, status: string, sessionId: string}> {
+    const targetSessionId = sessionId || this.sessionId;
+    if (!targetSessionId) {
+      throw new Error('No active session');
+    }
+
+    console.log('Sending async AI analysis request for session:', targetSessionId);
+
+    return this.baseApi.post<{requestId: string, status: string, sessionId: string}>(
+      `/api/kafka/ai/analyze?sessionId=${targetSessionId}`, 
+      {}
+    ).pipe(
+      map(response => {
+        if (response.success && response.data) {
+          console.log('AI analysis request sent successfully:', response.data);
+          return response.data;
+        }
+        throw new Error(response.message || 'Failed to send AI analysis request');
+      }),
+      catchError(error => {
+        console.error('Error sending AI analysis request:', error);
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Check analysis status for a given requestId
+   */
+  checkAnalysisStatus(requestId: string): Observable<AnalysisStatus> {
+    console.log('Checking analysis status for request:', requestId);
+
+    return this.baseApi.get<AnalysisStatus>(`/api/kafka/ai/status/${requestId}`).pipe(
+      map(response => {
+        if (response.success && response.data) {
+          console.log('Analysis status received:', response.data);
+          return response.data;
+        }
+        throw new Error(response.message || 'Failed to get analysis status');
+      }),
+      catchError(error => {
+        console.error('Error checking analysis status:', error);
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Get completed analysis results for a session
+   */
+  getAnalysisResults(sessionId?: string): Observable<SpendingInsights> {
+    const targetSessionId = sessionId || this.sessionId;
+    if (!targetSessionId) {
+      throw new Error('No active session');
+    }
+
+    console.log('Retrieving analysis results for session:', targetSessionId);
+
+    return this.baseApi.get<SpendingInsights>(`/api/kafka/ai/results/${targetSessionId}`).pipe(
+      map(response => {
+        if (response.success && response.data) {
+          console.log('Analysis results retrieved successfully:', response.data);
+          return response.data;
+        }
+        throw new Error(response.message || 'Failed to get analysis results');
+      }),
+      catchError(error => {
+        console.error('Error retrieving analysis results:', error);
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Get analysis progress for a session
+   */
+  getAnalysisProgress(sessionId?: string): Observable<AnalysisProgress> {
+    const targetSessionId = sessionId || this.sessionId;
+    if (!targetSessionId) {
+      throw new Error('No active session');
+    }
+
+    console.log('Retrieving analysis progress for session:', targetSessionId);
+
+    return this.baseApi.get<AnalysisProgress>(`/api/kafka/ai/progress/${targetSessionId}`).pipe(
+      map(response => {
+        if (response.success && response.data) {
+          console.log('Analysis progress received:', response.data);
+          return response.data;
+        }
+        throw new Error(response.message || 'Failed to get analysis progress');
+      }),
+      catchError(error => {
+        console.error('Error retrieving analysis progress:', error);
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Get all insights asynchronously with automatic polling
+   * This is the main method that handles the complete async flow
+   */
+  getAllInsightsAsync(sessionId?: string): Observable<SpendingInsights> {
+    const targetSessionId = sessionId || this.sessionId;
+    if (!targetSessionId) {
+      throw new Error('No active session');
+    }
+
+    console.log('Starting async AI analysis for session:', targetSessionId);
+
+    // Step 1: Send analysis request
+    return this.sendAIAnalysisRequest(targetSessionId).pipe(
+      switchMap(initResponse => {
+        const requestId = initResponse.requestId;
+        console.log('Analysis request initiated with ID:', requestId);
+        
+        // Step 2: Poll until completion
+        return this.pollUntilComplete(requestId);
+      })
+    );
+  }
+
+  /**
+   * Poll for analysis completion with intelligent intervals
+   */
+  private pollUntilComplete(requestId: string): Observable<SpendingInsights> {
+    console.log('Starting polling for request:', requestId);
+
+    return interval(2000).pipe( // Poll every 2 seconds
+      startWith(0), // Start immediately
+      switchMap(() => this.checkAnalysisStatus(requestId)),
+      tap(status => {
+        console.log('Polling status:', status.status, 
+          status.status === 'PROCESSING' ? `(${status.chunksProcessed}/${status.totalChunks})` : '');
+      }),
+      filter(status => status.status === 'COMPLETED'),
+      take(1), // Take first completion
+      switchMap(status => {
+        if (status.insights) {
+          return [status.insights];
+        } else {
+          // If insights not in status response, fetch separately
+          return this.getAnalysisResults(status.sessionId);
+        }
+      }),
+      timeout(300000), // 5 minute timeout
+      catchError(error => {
+        console.error('Error during polling:', error);
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Check if session has completed analysis
+   */
+  hasCompletedAnalysis(sessionId?: string): Observable<boolean> {
+    const targetSessionId = sessionId || this.sessionId;
+    if (!targetSessionId) {
+      return new Observable(observer => {
+        observer.next(false);
+        observer.complete();
+      });
+    }
+
+    return this.getAnalysisResults(targetSessionId).pipe(
+      map(() => true),
+      catchError(() => {
+        return new Observable<boolean>(observer => {
+          observer.next(false);
+          observer.complete();
+        });
       })
     );
   }

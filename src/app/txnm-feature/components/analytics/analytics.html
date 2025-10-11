@@ -1,101 +1,396 @@
-<div class="placeholder-container">
-  <div class="placeholder-content">
-    <mat-icon class="placeholder-icon">analytics</mat-icon>
-    <h1>Analytics Dashboard</h1>
-    <p class="placeholder-description">
-      Advanced analytics and insights for your financial transactions. Interactive charts and detailed reports.
-    </p>
+<div class="analytics-container">
+  <!-- Header Section -->
+  <div class="analytics-header">
+    <div class="header-content">
+      <mat-icon class="header-icon">analytics</mat-icon>
+      <div class="header-text">
+        <h1>Analytics Dashboard</h1>
+        <p>Financial insights and transaction analysis</p>
+      </div>
+    </div>
     
-    <!-- Loading State -->
-    <div class="loading-container" *ngIf="isLoading">
-      <mat-spinner diameter="40"></mat-spinner>
-      <p>Loading analytics data...</p>
+    <!-- Analytics Navigation Dropdown -->
+    <div class="analytics-navigation" *ngIf="!isLoading && !errorMessage && transactions.length > 0">
+      <mat-form-field appearance="outline" class="analytics-select">
+        <mat-label>Select Analytics View</mat-label>
+        <mat-select [(value)]="selectedAnalytics" (selectionChange)="onAnalyticsChange()" placeholder="Choose analytics view">
+          <mat-option 
+            *ngFor="let option of analyticsOptions" 
+            [value]="option.value"
+            [disabled]="!option.available">
+            <mat-icon>{{ option.icon }}</mat-icon>
+            <span>{{ option.label }}</span>
+            <span *ngIf="!option.available" class="coming-soon">(Coming Soon)</span>
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Loading analytics data...</p>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-container" *ngIf="errorMessage && !isLoading">
+    <mat-icon class="error-icon">error</mat-icon>
+    <h3>Unable to Load Analytics</h3>
+    <p>{{ errorMessage }}</p>
+    <button mat-raised-button color="primary" (click)="goHome()">
+      <mat-icon>home</mat-icon>
+      Back to Home
+    </button>
+  </div>
+
+  <!-- Main Analytics Content -->
+  <div class="analytics-content" *ngIf="!isLoading && !errorMessage && transactions.length > 0">
+    
+    <!-- Summary Cards Section -->
+    <div class="summary-section">
+      <h2>Transaction Summary</h2>
+      <div class="summary-cards-grid">
+        
+        <!-- Total Income Card -->
+        <mat-card class="summary-card income-card">
+          <mat-card-content>
+            <div class="card-header">
+              <mat-icon class="card-icon">trending_up</mat-icon>
+              <div class="card-trend">
+                <mat-icon class="trend-up">arrow_upward</mat-icon>
+              </div>
+            </div>
+            <div class="card-content">
+              <h3 class="card-value">{{ formatCurrency(getTotalIncome()) }}</h3>
+              <p class="card-title">Total Income</p>
+              <small class="card-subtitle">All credit transactions</small>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Total Expenses Card -->
+        <mat-card class="summary-card expense-card">
+          <mat-card-content>
+            <div class="card-header">
+              <mat-icon class="card-icon">trending_down</mat-icon>
+              <div class="card-trend">
+                <mat-icon class="trend-down">arrow_downward</mat-icon>
+              </div>
+            </div>
+            <div class="card-content">
+              <h3 class="card-value">{{ formatCurrency(getTotalExpenses()) }}</h3>
+              <p class="card-title">Total Expenses</p>
+              <small class="card-subtitle">All debit transactions</small>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Net Amount Card -->
+        <mat-card class="summary-card net-card" [class.surplus]="getNetAmount() >= 0" [class.deficit]="getNetAmount() < 0">
+          <mat-card-content>
+            <div class="card-header">
+              <mat-icon class="card-icon">{{ getNetAmount() >= 0 ? 'account_balance' : 'warning' }}</mat-icon>
+              <div class="card-trend">
+                <mat-icon [class]="getNetAmount() >= 0 ? 'trend-up' : 'trend-down'">
+                  {{ getNetAmount() >= 0 ? 'arrow_upward' : 'arrow_downward' }}
+                </mat-icon>
+              </div>
+            </div>
+            <div class="card-content">
+              <h3 class="card-value">{{ formatCurrency(getNetAmount()) }}</h3>
+              <p class="card-title">Net Amount</p>
+              <small class="card-subtitle">{{ getNetAmount() >= 0 ? 'Surplus' : 'Deficit' }}</small>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Transaction Count Card -->
+        <mat-card class="summary-card count-card">
+          <mat-card-content>
+            <div class="card-header">
+              <mat-icon class="card-icon">receipt</mat-icon>
+              <div class="card-trend">
+                <mat-icon class="trend-neutral">trending_flat</mat-icon>
+              </div>
+            </div>
+            <div class="card-content">
+              <h3 class="card-value">{{ getTotalCount() }}</h3>
+              <p class="card-title">Total Transactions</p>
+              <small class="card-subtitle">All processed transactions</small>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+      </div>
     </div>
 
-    <!-- Error State -->
-    <div class="error-container" *ngIf="errorMessage && !isLoading">
-      <mat-icon class="error-icon">error</mat-icon>
-      <h3>Unable to Load Analytics</h3>
-      <p>{{ errorMessage }}</p>
-      <button mat-raised-button color="primary" (click)="goHome()">
-        <mat-icon>home</mat-icon>
-        Back to Home
-      </button>
-    </div>
-
-    <!-- Analytics Content -->
-    <div *ngIf="!isLoading && !errorMessage">
+    <!-- AI Insights Section -->
+    <div class="ai-insights-section">
+      <div class="ai-insights-header">
+        <mat-icon class="ai-icon">psychology</mat-icon>
+        <div class="ai-header-text">
+          <h2>AI-Powered Insights</h2>
+          <p>Get intelligent analysis of your spending patterns and personalized recommendations</p>
+        </div>
+      </div>
       
-      <div class="analytics-info" *ngIf="transactions.length > 0">
-        <div class="info-card">
-          <mat-icon>receipt</mat-icon>
-          <div>
-            <h3>{{ getTotalCount() }}</h3>
-            <p>Transactions Ready for Analysis</p>
+      <div class="ai-insights-content" *ngIf="!aiInsights && !isLoadingAI && !isAnalysisRunning()">
+        <div class="ai-placeholder">
+          <mat-icon class="placeholder-icon">auto_awesome</mat-icon>
+          <h3>Unlock Smart Analytics</h3>
+          <p>Choose your preferred analysis method:</p>
+          
+          <!-- Analysis Method Selection -->
+          <div class="analysis-methods">
+            <button mat-raised-button color="primary" (click)="getAIInsights()" [disabled]="isLoadingAI">
+              <mat-icon>psychology</mat-icon>
+              Quick Analysis (Sync)
+            </button>
+            
+            <button mat-raised-button color="accent" (click)="getAIInsightsAsync()" [disabled]="isAnalysisRunning()">
+              <mat-icon>speed</mat-icon>
+              Advanced Analysis (Async)
+            </button>
+          </div>
+          
+          <div class="method-descriptions">
+            <div class="method-description">
+              <mat-icon>flash_on</mat-icon>
+              <span><strong>Quick Analysis:</strong> Fast synchronous processing for smaller datasets</span>
+            </div>
+            <div class="method-description">
+              <mat-icon>timeline</mat-icon>
+              <span><strong>Advanced Analysis:</strong> Chunked processing with progress tracking for large datasets</span>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="analytics-navigation" *ngIf="transactions.length > 0">
-        <h3>Available Analytics:</h3>
-        <div class="analytics-cards">
-          <div class="analytics-card" (click)="goToDailyAnalytics()">
-            <mat-icon>trending_up</mat-icon>
-            <h4>Daily Analytics</h4>
-            <p>Daily transaction trends and insights</p>
-            <span class="card-status">Available</span>
+      <!-- AI Loading State (Sync) -->
+      <div class="ai-loading" *ngIf="isLoadingAI && !isAnalysisRunning()">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>AI is analyzing your transactions...</p>
+      </div>
+
+      <!-- Async Analysis Progress State -->
+      <div class="ai-progress" *ngIf="isAnalysisRunning()">
+        <div class="progress-header">
+          <mat-icon class="progress-icon">timeline</mat-icon>
+          <h3>Advanced AI Analysis in Progress</h3>
+        </div>
+        
+        <div class="progress-content">
+          <mat-spinner diameter="40"></mat-spinner>
+          
+          <div class="progress-info">
+            <p class="progress-text">{{ getProgressText() }}</p>
+            
+            <!-- Progress Bar -->
+            <mat-progress-bar 
+              mode="determinate" 
+              [value]="getProgressPercentage()"
+              color="accent"
+              class="progress-bar">
+            </mat-progress-bar>
+            
+            <div class="progress-details">
+              <span class="progress-percentage">{{ getProgressPercentage() }}%</span>
+              <span class="processing-time" *ngIf="getProcessingTimeSeconds() > 0">
+                Processing time: {{ getProcessingTimeSeconds() }}s
+              </span>
+            </div>
           </div>
-          <div class="analytics-card disabled">
-            <mat-icon>bar_chart</mat-icon>
-            <h4>Weekly Analytics</h4>
-            <p>Weekly spending patterns and trends</p>
-            <span class="card-status">Coming Soon</span>
-          </div>
-          <div class="analytics-card disabled">
-            <mat-icon>pie_chart</mat-icon>
-            <h4>Five-Day Analytics</h4>
-            <p>Short-term trend analysis</p>
-            <span class="card-status">Coming Soon</span>
-          </div>
+          
+          <!-- Cancel Button -->
+          <button mat-stroked-button color="warn" (click)="cancelAnalysis()" class="cancel-button">
+            <mat-icon>cancel</mat-icon>
+            Cancel Analysis
+          </button>
         </div>
       </div>
 
-      <div class="placeholder-features">
-        <h3>Analytics Features:</h3>
-        <ul>
-          <li>Interactive spending charts</li>
-          <li>Daily transaction trends</li>
-          <li>Income vs expense visualization</li>
-          <li>Real-time data processing</li>
-          <li>Responsive chart design</li>
-          <li>Summary statistics</li>
-          <li>Exportable insights</li>
-        </ul>
+      <!-- AI Error State -->
+      <div class="ai-error" *ngIf="(aiError || analysisError) && !isLoadingAI && !isAnalysisRunning()">
+        <mat-icon class="error-icon">error</mat-icon>
+        <h3>AI Analysis Failed</h3>
+        <p>{{ aiError || analysisError }}</p>
+        
+        <div class="error-actions">
+          <button mat-stroked-button (click)="getAIInsights()" *ngIf="aiError">
+            <mat-icon>refresh</mat-icon>
+            Retry Quick Analysis
+          </button>
+          
+          <button mat-stroked-button (click)="retryAnalysis()" *ngIf="analysisError">
+            <mat-icon>refresh</mat-icon>
+            Retry Advanced Analysis
+          </button>
+        </div>
       </div>
 
-      <div class="placeholder-actions">
-        <button class="transactions-button" (click)="goToTransactions()" *ngIf="transactions.length > 0">
-          <mat-icon>list</mat-icon>
-          <span>View Transactions</span>
-        </button>
-        <button class="back-button" (click)="goHome()">
-          <mat-icon>arrow_back</mat-icon>
-          <span>Back to Home</span>
-        </button>
-      </div>
+      <!-- AI Insights Results -->
+      <div class="ai-results" *ngIf="aiInsights && !isLoadingAI && !isAnalysisRunning()">
+        
+        <!-- Analysis Completion Status -->
+        <div class="completion-status" *ngIf="isAnalysisDone()">
+          <mat-card class="completion-card">
+            <mat-card-content>
+              <div class="completion-header">
+                <mat-icon class="success-icon">check_circle</mat-icon>
+                <h3>Analysis Complete</h3>
+              </div>
+              <div class="completion-details">
+                <p>Advanced AI analysis completed successfully</p>
+                <span class="completion-time" *ngIf="getProcessingTimeSeconds() > 0">
+                  Total processing time: {{ getProcessingTimeSeconds() }}s
+                </span>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+        
+        <!-- Confidence Score -->
+        <div class="confidence-score">
+          <mat-card class="confidence-card">
+            <mat-card-content>
+              <div class="confidence-header">
+                <mat-icon>verified</mat-icon>
+                <h3>Analysis Confidence</h3>
+              </div>
+              <div class="confidence-value">
+                <span class="score">{{ aiInsights && aiInsights.confidenceScore ? (aiInsights.confidenceScore * 100).toFixed(0) : '0' }}%</span>
+                <mat-progress-bar 
+                  mode="determinate" 
+                  [value]="aiInsights && aiInsights.confidenceScore ? aiInsights.confidenceScore * 100 : 0"
+                  color="accent">
+                </mat-progress-bar>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
 
+        <!-- Spending Patterns -->
+        <div class="insights-section" *ngIf="aiInsights && aiInsights.spendingPatterns && aiInsights.spendingPatterns.length > 0">
+          <h3><mat-icon>trending_up</mat-icon> Spending Patterns</h3>
+          <mat-card>
+            <mat-card-content>
+              <ul class="insights-list">
+                <li *ngFor="let pattern of aiInsights?.spendingPatterns">{{ pattern }}</li>
+              </ul>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <!-- Unusual Transactions -->
+        <div class="insights-section" *ngIf="aiInsights && aiInsights.unusualTransactions && aiInsights.unusualTransactions.length > 0">
+          <h3><mat-icon>warning</mat-icon> Unusual Transactions</h3>
+          <mat-card>
+            <mat-card-content>
+              <ul class="insights-list">
+                <li *ngFor="let unusual of aiInsights?.unusualTransactions">{{ unusual }}</li>
+              </ul>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <!-- Savings Opportunities -->
+        <div class="insights-section" *ngIf="aiInsights && aiInsights.savingsOpportunities && aiInsights.savingsOpportunities.length > 0">
+          <h3><mat-icon>savings</mat-icon> Savings Opportunities</h3>
+          <mat-card>
+            <mat-card-content>
+              <ul class="insights-list">
+                <li *ngFor="let opportunity of aiInsights?.savingsOpportunities">{{ opportunity }}</li>
+              </ul>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <!-- Behavioral Insights -->
+        <div class="insights-section" *ngIf="aiInsights && aiInsights.behavioralInsights && aiInsights.behavioralInsights.length > 0">
+          <h3><mat-icon>psychology</mat-icon> Behavioral Insights</h3>
+          <mat-card>
+            <mat-card-content>
+              <ul class="insights-list">
+                <li *ngFor="let insight of aiInsights?.behavioralInsights">{{ insight }}</li>
+              </ul>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <!-- AI Recommendations -->
+        <div class="insights-section" *ngIf="aiInsights && aiInsights.recommendations && aiInsights.recommendations.length > 0">
+          <h3><mat-icon>lightbulb</mat-icon> AI Recommendations</h3>
+          <div class="recommendations-grid">
+            <mat-card *ngFor="let rec of aiInsights?.recommendations" class="recommendation-card" [class.high-priority]="rec.priority === 'HIGH'">
+              <mat-card-content>
+                <div class="recommendation-header">
+                  <h4>{{ rec.title }}</h4>
+                  <mat-chip [class]="'priority-' + rec.priority.toLowerCase()">{{ rec.priority }}</mat-chip>
+                </div>
+                <p class="recommendation-description">{{ rec.description }}</p>
+                <div class="recommendation-footer">
+                  <small class="action-required">{{ rec.actionRequired }}</small>
+                  <span *ngIf="rec.potentialSavings" class="savings-amount">
+                    Potential Savings: {{ formatCurrency(rec.potentialSavings) }}
+                  </span>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+        </div>
+
+        <!-- Category Breakdown -->
+        <div class="insights-section" *ngIf="hasCategoryBreakdown()">
+          <h3><mat-icon>pie_chart</mat-icon> Category Breakdown</h3>
+          <mat-card>
+            <mat-card-content>
+              <div class="category-breakdown">
+                <div *ngFor="let category of getCategoryBreakdownArray()" class="category-item">
+                  <span class="category-name">{{ category.name }}</span>
+                  <span class="category-amount">{{ formatCurrency(category.amount) }}</span>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <!-- Refresh AI Insights -->
+        <div class="ai-refresh">
+          <button mat-stroked-button (click)="getAIInsights()" [disabled]="isLoadingAI">
+            <mat-icon>refresh</mat-icon>
+            Refresh AI Analysis
+          </button>
+        </div>
+      </div>
     </div>
 
-    <!-- No Data State -->
-    <div class="no-data-container" *ngIf="!isLoading && !errorMessage && transactions.length === 0">
-      <mat-icon class="no-data-icon">analytics</mat-icon>
-      <h3>No Transaction Data Available</h3>
-      <p>Upload your bank statement to see analytics and insights.</p>
-      <button mat-raised-button color="primary" (click)="goHome()">
-        <mat-icon>upload</mat-icon>
-        Upload Statement
-      </button>
+    <!-- Quick Actions Section -->
+    <div class="quick-actions">
+      <h3>Quick Actions</h3>
+      <div class="action-buttons">
+        <button mat-raised-button color="primary" (click)="goToTransactions()">
+          <mat-icon>list</mat-icon>
+          View All Transactions
+        </button>
+        <button mat-stroked-button (click)="goHome()">
+          <mat-icon>home</mat-icon>
+          Back to Home
+        </button>
+      </div>
     </div>
 
   </div>
+
+  <!-- No Data State -->
+  <div class="no-data-container" *ngIf="!isLoading && !errorMessage && transactions.length === 0">
+    <mat-icon class="no-data-icon">analytics</mat-icon>
+    <h3>No Transaction Data Available</h3>
+    <p>Upload your bank statement to see analytics and insights.</p>
+    <button mat-raised-button color="primary" (click)="goHome()">
+      <mat-icon>upload</mat-icon>
+      Upload Statement
+    </button>
+  </div>
+
 </div>

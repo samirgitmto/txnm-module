@@ -98,8 +98,8 @@ txnm-module/src/app/txnm-feature/
   - Logout functionality
   - Authentication state management
 
-- [ ] **SessionService** (Replaces SessionContext)
-  - Session creation and validation
+- [ ] **SessionService** (Local session management)
+  - Local session creation and validation
   - Session refresh mechanism
   - Session storage management
   - Guest session handling
