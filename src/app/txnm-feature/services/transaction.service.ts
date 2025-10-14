@@ -186,7 +186,7 @@ export class TransactionService {
     console.log('Sending async AI analysis request for session:', targetSessionId);
 
     return this.baseApi.post<{requestId: string, status: string, sessionId: string}>(
-      `/api/kafka/ai/analyze?sessionId=${targetSessionId}`, 
+      `/kafka/ai/analyze?sessionId=${targetSessionId}`, 
       {}
     ).pipe(
       map(response => {
@@ -209,7 +209,7 @@ export class TransactionService {
   checkAnalysisStatus(requestId: string): Observable<AnalysisStatus> {
     console.log('Checking analysis status for request:', requestId);
 
-    return this.baseApi.get<AnalysisStatus>(`/api/kafka/ai/status/${requestId}`).pipe(
+    return this.baseApi.get<AnalysisStatus>(`/kafka/ai/status/${requestId}`).pipe(
       map(response => {
         if (response.success && response.data) {
           console.log('Analysis status received:', response.data);
@@ -235,7 +235,7 @@ export class TransactionService {
 
     console.log('Retrieving analysis results for session:', targetSessionId);
 
-    return this.baseApi.get<SpendingInsights>(`/api/kafka/ai/results/${targetSessionId}`).pipe(
+    return this.baseApi.get<SpendingInsights>(`/kafka/ai/results/${targetSessionId}`).pipe(
       map(response => {
         if (response.success && response.data) {
           console.log('Analysis results retrieved successfully:', response.data);
@@ -261,7 +261,7 @@ export class TransactionService {
 
     console.log('Retrieving analysis progress for session:', targetSessionId);
 
-    return this.baseApi.get<AnalysisProgress>(`/api/kafka/ai/progress/${targetSessionId}`).pipe(
+    return this.baseApi.get<AnalysisProgress>(`/kafka/ai/progress/${targetSessionId}`).pipe(
       map(response => {
         if (response.success && response.data) {
           console.log('Analysis progress received:', response.data);

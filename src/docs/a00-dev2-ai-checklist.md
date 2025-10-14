@@ -15,7 +15,7 @@ This checklist outlines the integration of the new Kafka-based AI analysis syste
 
 ### **1.1 Update TransactionService** ✅ COMPLETE
 - ✅ **Add new async AI API methods alongside existing ones**
-  - ✅ Add `getAllInsightsAsync()` method using `/api/kafka/ai/analyze` endpoint
+  - ✅ Add `getAllInsightsAsync()` method using `/kafka/ai/analyze` endpoint
   - ✅ Keep existing `getAISpendingInsights()` method for backward compatibility
   - ✅ Add request tracking with `requestId` from response
   - ✅ Implement polling mechanism for status checking
