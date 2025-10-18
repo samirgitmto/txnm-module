@@ -145,24 +145,30 @@
           <div class="analysis-methods">
             <button mat-raised-button color="primary" (click)="getAIInsights()" [disabled]="isLoadingAI">
               <mat-icon>psychology</mat-icon>
-              Quick Analysis (Sync)
+              AI Analysis
             </button>
             
+            <!-- Async Analysis Button - Hidden for now, ready for future use -->
+            <!-- 
             <button mat-raised-button color="accent" (click)="getAIInsightsAsync()" [disabled]="isAnalysisRunning()">
               <mat-icon>speed</mat-icon>
               Advanced Analysis (Async)
             </button>
+            -->
           </div>
           
           <div class="method-descriptions">
             <div class="method-description">
-              <mat-icon>flash_on</mat-icon>
-              <span><strong>Quick Analysis:</strong> Fast synchronous processing for smaller datasets</span>
+              <mat-icon>psychology</mat-icon>
+              <span><strong>AI Analysis:</strong> Intelligent analysis of your spending patterns and personalized recommendations</span>
             </div>
+            <!-- Async description hidden for now -->
+            <!-- 
             <div class="method-description">
               <mat-icon>timeline</mat-icon>
               <span><strong>Advanced Analysis:</strong> Chunked processing with progress tracking for large datasets</span>
             </div>
+            -->
           </div>
         </div>
       </div>
@@ -219,13 +225,16 @@
         <div class="error-actions">
           <button mat-stroked-button (click)="getAIInsights()" *ngIf="aiError">
             <mat-icon>refresh</mat-icon>
-            Retry Quick Analysis
+            Retry AI Analysis
           </button>
           
+          <!-- Async retry button hidden for now -->
+          <!-- 
           <button mat-stroked-button (click)="retryAnalysis()" *ngIf="analysisError">
             <mat-icon>refresh</mat-icon>
             Retry Advanced Analysis
           </button>
+          -->
         </div>
       </div>
 
