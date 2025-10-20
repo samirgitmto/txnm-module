@@ -4,6 +4,7 @@ import { Transaction, SpendingInsights, AnalysisStatus, AnalysisProgress } from 
 import { TransactionService } from '../../services/transaction.service';
 import { AIAnalysisStateService, AnalysisState } from '../../services/ai-analysis-state.service';
 import { Subject, takeUntil } from 'rxjs';
+import { SessionService } from '../../services/session.service';
 
 @Component({
   selector: 'app-analytics',
@@ -41,7 +42,8 @@ export class Analytics implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private transactionService: TransactionService,
-    private aiAnalysisStateService: AIAnalysisStateService
+    private aiAnalysisStateService: AIAnalysisStateService,
+    private sessionService: SessionService
   ) {}
 
   ngOnInit(): void {
@@ -89,8 +91,15 @@ export class Analytics implements OnInit, OnDestroy {
   private loadTransactions(): void {
     this.isLoading = true;
     this.errorMessage = null;
-
-    // Fetch transactions from backend using session ID
+  
+    // Check if session exists
+    const sessionId = this.sessionService.getSessionId();
+    if (!sessionId) {
+      this.errorMessage = 'No active session. Please upload a statement first.';
+      this.isLoading = false;
+      return;
+    }
+  
     this.transactionService.getTransactions()
       .pipe(takeUntil(this.destroy$))
       .subscribe({

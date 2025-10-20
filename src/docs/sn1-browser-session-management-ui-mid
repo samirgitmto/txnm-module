@@ -1,0 +1,453 @@
+# Browser-Based Session Isolation Implementation Guide
+
+## Overview
+This document outlines the implementation strategy for Browser-Based Session Isolation in the TXNM-Module Angular frontend. The goal is to ensure each browser tab/window gets an independent session with unique sessionIds, preventing data conflicts in multi-user scenarios.
+
+## Current State Analysis
+
+### Current Session Management Issues
+1. **SessionService** stores sessionId in localStorage (persistent across browser sessions)
+2. **TransactionService** also manages sessionId independently in localStorage
+3. **AuthService** relies on SessionService for session management
+4. **Session duplication** occurs when app restarts (same sessionId reused)
+
+### Current Flow
+```
+App Start → SessionService.loadSession() → localStorage.getItem() → Reuse old sessionId
+Upload Form → AuthService.loginAsGuest() → SessionService.createGuestSession() → Generate new sessionId
+```
+
+## Target Architecture: Browser-Based Session Isolation
+
+### Core Principles
+1. **Memory-Only Storage**: SessionId stored in service memory, not localStorage
+2. **Per-Upload Session**: New sessionId generated for each upload form submission
+3. **Browser Isolation**: Each browser tab/window gets independent session
+4. **No Persistence**: SessionId not persisted across browser sessions
+
+### Implementation Strategy
+
+## 1. SessionService Modifications
+
+### Current Implementation Issues
+```typescript
+// CURRENT PROBLEM: Persistent storage
+private loadSession(): void {
+  const storedSession = localStorage.getItem(this.SESSION_KEY);
+  if (storedSession) {
+    this.sessionInfo = JSON.parse(storedSession); // ← Reuses old sessionId
+  }
+}
+```
+
+### Target Implementation
+```typescript
+// NEW APPROACH: Memory-only, lazy creation
+export class SessionService {
+  private sessionInfo: SessionInfo | null = null; // Memory only
+  
+  constructor() {
+    // No automatic session loading
+    // Session created only when needed
+  }
+  
+  createSessionForUpload(): string {
+    // Clear any existing session
+    this.clearCurrentSession();
+    
+    // Generate new sessionId
+    const sessionId = this.generateUUID();
+    
+    // Store in memory only
+    this.sessionInfo = {
+      sessionId,
+      userType: 'GUEST',
+      expiry: Date.now() + 3600000, // 1 hour
+      browserId: this.generateBrowserId() // Unique per browser
+    };
+    
+    return sessionId;
+  }
+  
+  private clearCurrentSession(): void {
+    this.sessionInfo = null;
+    // No localStorage cleanup needed (memory-only)
+  }
+}
+```
+
+## 2. TransactionService Modifications
+
+### Current Implementation Issues
+```typescript
+// CURRENT PROBLEM: Independent session management
+private initializeSession(): void {
+  const storedSessionId = localStorage.getItem('txnm_session_id');
+  if (storedSessionId) {
+    this.sessionId = storedSessionId; // ← Reuses old sessionId
+  } else {
+    this.sessionId = this.generateUUID();
+    localStorage.setItem('txnm_session_id', this.sessionId);
+  }
+}
+```
+
+### Target Implementation
+```typescript
+// NEW APPROACH: Delegate to SessionService
+export class TransactionService {
+  private sessionId: string | null = null;
+  
+  constructor(
+    private baseApi: BaseApiService,
+    private sessionService: SessionService // Inject SessionService
+  ) {
+    // No automatic session initialization
+  }
+  
+  private getSessionId(): string | null {
+    return this.sessionService.getSessionId();
+  }
+  
+  parseTransactions(file: File, password: string, bankCode: string): Observable<Transaction[]> {
+    // Ensure session exists before API call
+    const sessionId = this.sessionService.getSessionId();
+    if (!sessionId) {
+      throw new Error('No active session. Please submit the form first.');
+    }
+    
+    // Use sessionId from SessionService
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('password', password);
+    formData.append('bankName', bankCode.toLowerCase());
+    formData.append('sessionId', sessionId);
+    
+    return this.baseApi.postFormData<Transaction[]>('/transactions/parse', formData);
+  }
+}
+```
+
+## 3. AuthService Modifications
+
+### Current Implementation Issues
+```typescript
+// CURRENT PROBLEM: Relies on persistent session
+private async initializeAuth(): Promise<void> {
+  const sessionId = this.sessionService.getSessionId();
+  if (sessionId) {
+    // Uses old sessionId from localStorage
+  }
+}
+```
+
+### Target Implementation
+```typescript
+// NEW APPROACH: No automatic initialization
+export class AuthService {
+  constructor(private sessionService: SessionService) {
+    // No automatic auth initialization
+    // User must submit form to create session
+  }
+  
+  loginAsGuest(): Observable<User> {
+    return new Observable(observer => {
+      // Create new session for this upload
+      const sessionId = this.sessionService.createSessionForUpload();
+      
+      const user: User = {
+        id: 0,
+        email: null,
+        googleId: null,
+        fullName: null,
+        userType: 'GUEST',
+        sessionId: sessionId,
+        lastLogin: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      this.userSubject.next(user);
+      observer.next(user);
+      observer.complete();
+    });
+  }
+}
+```
+
+## 4. TxnmHome Component Modifications
+
+### Current Implementation Issues
+```typescript
+// CURRENT PROBLEM: Session created before form submission
+async onSubmit(): Promise<void> {
+  if (!this.isAuthenticated) {
+    await this.authService.loginAsGuest().toPromise(); // ← Creates session too early
+  }
+  // ... rest of form submission
+}
+```
+
+### Target Implementation
+```typescript
+// NEW APPROACH: Session created during form submission
+async onSubmit(): Promise<void> {
+  if (this.uploadForm.valid && !this.errorMessage && this.selectedFile) {
+    try {
+      this.isLoading = true;
+      this.errorMessage = null;
+
+      // Create session ONLY when form is submitted
+      await this.authService.loginAsGuest().toPromise();
+
+      const formData = this.uploadForm.value;
+      const transactions = await this.transactionService.parseTransactions(
+        this.selectedFile,
+        formData.statementKey,
+        formData.selectedBank
+      ).toPromise();
+
+      if (transactions) {
+        this.snackBar.open('Transactions parsed successfully!', 'Close', {
+          duration: 3000
+        });
+        
+        // Navigate to analytics dashboard
+        this.router.navigate(['/txnm/analytics'], {
+          state: { message: 'Transactions parsed successfully!' }
+        });
+      }
+    } catch (error: any) {
+      this.errorMessage = error?.message || 'An error occurred while processing the file';
+    } finally {
+      this.isLoading = false;
+    }
+  }
+}
+```
+
+## 5. Analytics Component Modifications
+
+### Current Implementation Issues
+```typescript
+// CURRENT PROBLEM: Assumes session exists
+private loadTransactions(): void {
+  this.transactionService.getTransactions() // ← May fail if no session
+    .pipe(takeUntil(this.destroy$))
+    .subscribe({
+      next: (transactions) => {
+        this.transactions = transactions;
+      },
+      error: (error) => {
+        this.errorMessage = error.message || 'Failed to load transactions';
+      }
+    });
+}
+```
+
+### Target Implementation
+```typescript
+// NEW APPROACH: Check session before API calls
+private loadTransactions(): void {
+  this.isLoading = true;
+  this.errorMessage = null;
+
+  // Check if session exists
+  const sessionId = this.sessionService.getSessionId();
+  if (!sessionId) {
+    this.errorMessage = 'No active session. Please upload a statement first.';
+    this.isLoading = false;
+    return;
+  }
+
+  this.transactionService.getTransactions()
+    .pipe(takeUntil(this.destroy$))
+    .subscribe({
+      next: (transactions) => {
+        this.transactions = transactions;
+        this.isLoading = false;
+      },
+      error: (error) => {
+        this.errorMessage = error.message || 'Failed to load transactions';
+        this.isLoading = false;
+      }
+    });
+}
+```
+
+## 6. BaseApiService Modifications
+
+### Current Implementation Issues
+```typescript
+// CURRENT PROBLEM: No sessionId in headers
+private getHeaders(): HttpHeaders {
+  return new HttpHeaders({
+    'Content-Type': 'application/json'
+  });
+}
+```
+
+### Target Implementation
+```typescript
+// NEW APPROACH: Include sessionId in headers
+export class BaseApiService {
+  constructor(
+    private http: HttpClient,
+    private sessionService: SessionService // Inject SessionService
+  ) {}
+
+  private getHeaders(): HttpHeaders {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json'
+    });
+    
+    // Add sessionId if available
+    const sessionId = this.sessionService.getSessionId();
+    if (sessionId) {
+      return headers.set('X-Session-ID', sessionId);
+    }
+    
+    return headers;
+  }
+}
+```
+
+## Implementation Steps
+
+### Step 1: Modify SessionService
+1. Remove localStorage persistence
+2. Implement memory-only storage
+3. Add `createSessionForUpload()` method
+4. Add `clearCurrentSession()` method
+
+### Step 2: Modify TransactionService
+1. Remove independent session management
+2. Inject SessionService dependency
+3. Use SessionService for sessionId
+4. Remove localStorage operations
+
+### Step 3: Modify AuthService
+1. Remove automatic session initialization
+2. Update `loginAsGuest()` to create new session
+3. Remove localStorage dependencies
+
+### Step 4: Modify Components
+1. Update TxnmHome to create session on form submission
+2. Update Analytics to check session before API calls
+3. Add session validation in all components
+
+### Step 5: Modify BaseApiService
+1. Inject SessionService dependency
+2. Include sessionId in request headers
+3. Add session validation
+
+## Benefits of This Approach
+
+### 1. Complete Browser Isolation
+- Each browser tab gets independent session
+- No cross-tab session sharing
+- Clean separation between users
+
+### 2. No Session Duplication
+- New sessionId for each upload
+- No persistent storage conflicts
+- Unique identifiers per session
+
+### 3. Production-Ready
+- Handles multiple users simultaneously
+- Scalable for concurrent access
+- Secure session management
+
+### 4. Simplified Debugging
+- Clear session boundaries
+- Easy to track session lifecycle
+- Better error handling
+
+## Testing Scenarios
+
+### Scenario 1: Single User, Single Browser
+```
+User opens app → No session
+User submits form → Creates sessionId: abc-123
+User navigates to analytics → Uses sessionId: abc-123
+User submits new form → Creates new sessionId: def-456
+```
+
+### Scenario 2: Single User, Multiple Browser Tabs
+```
+Tab 1: Form submission → sessionId: abc-123
+Tab 2: Form submission → sessionId: def-456
+Tab 3: Form submission → sessionId: ghi-789
+Each tab operates independently
+```
+
+### Scenario 3: Multiple Users, Different Browsers
+```
+User A (Chrome): sessionId: abc-123
+User B (Firefox): sessionId: def-456
+User C (Safari): sessionId: ghi-789
+Complete isolation between users
+```
+
+## Migration Strategy
+
+### Phase 1: Preparation
+1. Backup current implementation
+2. Create feature branch
+3. Document current behavior
+
+### Phase 2: Core Changes
+1. Modify SessionService (memory-only)
+2. Update TransactionService (delegate to SessionService)
+3. Update AuthService (no auto-init)
+
+### Phase 3: Component Updates
+1. Update TxnmHome component
+2. Update Analytics component
+3. Update other components as needed
+
+### Phase 4: Testing
+1. Test single user scenarios
+2. Test multi-tab scenarios
+3. Test multi-user scenarios
+4. Test error handling
+
+### Phase 5: Deployment
+1. Deploy to staging
+2. User acceptance testing
+3. Production deployment
+
+## Rollback Plan
+
+If issues arise, rollback steps:
+1. Revert SessionService to localStorage
+2. Revert TransactionService to independent management
+3. Revert AuthService to auto-initialization
+4. Revert component changes
+
+## Monitoring and Maintenance
+
+### Key Metrics to Monitor
+1. Session creation success rate
+2. API call success rate with sessionId
+3. User experience metrics
+4. Error rates and types
+
+### Maintenance Tasks
+1. Regular session cleanup
+2. Monitor memory usage
+3. Update session expiry logic
+4. Performance optimization
+
+## Conclusion
+
+This Browser-Based Session Isolation approach provides:
+- **Complete isolation** between browser sessions
+- **No session duplication** issues
+- **Production-ready** multi-user support
+- **Simplified debugging** and maintenance
+- **Scalable architecture** for future growth
+
+The implementation ensures that each user's upload session is completely independent, preventing any data conflicts or security issues in a multi-user environment.
+
+---

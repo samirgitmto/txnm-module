@@ -28,6 +28,7 @@ export interface SessionInfo {
   email?: string;
   fullName?: string;
   expiry: number;
+  browserId?: string;
 }
 
 export interface AIRecommendation {

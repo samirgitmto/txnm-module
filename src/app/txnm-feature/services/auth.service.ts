@@ -28,7 +28,6 @@ export class AuthService {
   public error$ = this.errorSubject.asObservable();
 
   constructor(private sessionService: SessionService) {
-    this.initializeAuth();
   }
 
   private async initializeAuth(): Promise<void> {
@@ -55,7 +54,7 @@ export class AuthService {
           this.userSubject.next(user);
         } else {
           // Session is invalid, clear it
-          await this.sessionService.deleteSession().toPromise();
+          // await this.sessionService.deleteSession().toPromise();
         }
       }
     } catch (err) {
@@ -68,50 +67,45 @@ export class AuthService {
 
   loginAsGuest(): Observable<User> {
     return new Observable(observer => {
-      this.sessionService.createGuestSession().subscribe({
-        next: (sessionInfo) => {
-          const user: User = {
-            id: 0,
-            email: null,
-            googleId: null,
-            fullName: null,
-            userType: 'GUEST',
-            sessionId: sessionInfo.sessionId,
-            lastLogin: new Date().toISOString(),
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          };
-          this.userSubject.next(user);
-          this.errorSubject.next(null);
-          observer.next(user);
-          observer.complete();
-        },
-        error: (error) => {
-          console.error('Guest login error:', error);
-          this.errorSubject.next('Failed to login as guest');
-          observer.error(error);
-        }
-      });
+      // Create new session for this upload
+      const sessionId = this.sessionService.createSessionForUpload();
+      
+      const user: User = {
+        id: 0,
+        email: null,
+        googleId: null,
+        fullName: null,
+        userType: 'GUEST',
+        sessionId: sessionId,
+        lastLogin: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      this.userSubject.next(user);
+      observer.next(user);
+      observer.complete();
     });
   }
 
-  logout(): Observable<void> {
-    return new Observable(observer => {
-      this.sessionService.deleteSession().subscribe({
-        next: () => {
-          this.userSubject.next(null);
-          this.errorSubject.next(null);
-          observer.next();
-          observer.complete();
-        },
-        error: (error) => {
-          console.error('Logout error:', error);
-          this.errorSubject.next('Failed to logout');
-          observer.error(error);
-        }
-      });
-    });
-  }
+
+  // logout(): Observable<void> {
+  //   return new Observable(observer => {
+  //     this.sessionService.deleteSession().subscribe({
+  //       next: () => {
+  //         this.userSubject.next(null);
+  //         this.errorSubject.next(null);
+  //         observer.next();
+  //         observer.complete();
+  //       },
+  //       error: (error) => {
+  //         console.error('Logout error:', error);
+  //         this.errorSubject.next('Failed to logout');
+  //         observer.error(error);
+  //       }
+  //     });
+  //   });
+  // }
 
   getCurrentUser(): User | null {
     return this.userSubject.value;

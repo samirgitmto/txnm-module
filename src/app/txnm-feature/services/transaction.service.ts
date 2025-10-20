@@ -3,6 +3,7 @@ import { Observable, interval, timer } from 'rxjs';
 import { map, catchError, switchMap, filter, take, timeout, tap, startWith } from 'rxjs/operators';
 import { BaseApiService } from './base-api.service';
 import { Transaction, ApiResponse, BankConfig, SpendingInsights, AnalysisStatus, AnalysisProgress, AnalysisRequest, AnalysisError, KafkaAnalysisResponse } from '../models/api-response.model';
+import { SessionService } from './session.service';
 
 @Injectable({
   providedIn: 'root'
@@ -37,29 +38,12 @@ export class TransactionService {
   };
 
   constructor(
-    private baseApi: BaseApiService
-  ) {
-    this.initializeSession();
-  }
+    private baseApi: BaseApiService,
+    private sessionService: SessionService
+  ) {  }
 
-  private initializeSession(): void {
-    // Generate or retrieve session ID from localStorage
-    const storedSessionId = localStorage.getItem('txnm_session_id');
-    if (storedSessionId) {
-      this.sessionId = storedSessionId;
-    } else {
-      this.sessionId = this.generateUUID();
-      localStorage.setItem('txnm_session_id', this.sessionId);
-    }
-    console.log('TransactionService initialized with session:', this.sessionId);
-  }
-
-  private generateUUID(): string {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      const r = Math.random() * 16 | 0;
-      const v = c === 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-    });
+  private getSessionId(): string | null {
+    return this.sessionService.getSessionId();
   }
 
   getBankConfigs(): { [key: string]: BankConfig } {
@@ -82,7 +66,7 @@ export class TransactionService {
     // Send bank code in lowercase as expected by backend
     formData.append('bankName', bankCode.toLowerCase());
     
-    const sessionId = this.sessionId;
+    const sessionId = this.getSessionId();
     if (sessionId) {
       formData.append('sessionId', sessionId);
     }
@@ -109,7 +93,7 @@ export class TransactionService {
   }
 
   getTransactions(): Observable<Transaction[]> {
-    const sessionId = this.sessionId;
+    const sessionId = this.getSessionId();
     if (!sessionId) {
       throw new Error('No active session');
     }
@@ -129,7 +113,7 @@ export class TransactionService {
   }
 
   getTransactionAnalytics(period: 'daily' | 'weekly' | 'five-day'): Observable<any> {
-    const sessionId = this.sessionId;
+    const sessionId = this.getSessionId();
     if (!sessionId) {
       throw new Error('No active session');
     }
@@ -149,7 +133,7 @@ export class TransactionService {
   }
 
   getAISpendingInsights(): Observable<SpendingInsights> {
-    const sessionId = this.sessionId;
+    const sessionId = this.getSessionId();
     if (!sessionId) {
       throw new Error('No active session');
     }
@@ -178,7 +162,7 @@ export class TransactionService {
    * Returns requestId for tracking
    */
   sendAIAnalysisRequest(sessionId?: string): Observable<{requestId: string, status: string, sessionId: string}> {
-    const targetSessionId = sessionId || this.sessionId;
+    const targetSessionId = sessionId || this.getSessionId();
     if (!targetSessionId) {
       throw new Error('No active session');
     }
@@ -228,7 +212,7 @@ export class TransactionService {
    * Get completed analysis results for a session
    */
   getAnalysisResults(sessionId?: string): Observable<SpendingInsights> {
-    const targetSessionId = sessionId || this.sessionId;
+    const targetSessionId = sessionId || this.getSessionId();
     if (!targetSessionId) {
       throw new Error('No active session');
     }
@@ -254,7 +238,7 @@ export class TransactionService {
    * Get analysis progress for a session
    */
   getAnalysisProgress(sessionId?: string): Observable<AnalysisProgress> {
-    const targetSessionId = sessionId || this.sessionId;
+    const targetSessionId = sessionId || this.getSessionId();
     if (!targetSessionId) {
       throw new Error('No active session');
     }
@@ -281,7 +265,7 @@ export class TransactionService {
    * This is the main method that handles the complete async flow
    */
   getAllInsightsAsync(sessionId?: string): Observable<SpendingInsights> {
-    const targetSessionId = sessionId || this.sessionId;
+    const targetSessionId = sessionId || this.getSessionId();
     if (!targetSessionId) {
       throw new Error('No active session');
     }
@@ -335,7 +319,7 @@ export class TransactionService {
    * Check if session has completed analysis
    */
   hasCompletedAnalysis(sessionId?: string): Observable<boolean> {
-    const targetSessionId = sessionId || this.sessionId;
+    const targetSessionId = sessionId || this.getSessionId();
     if (!targetSessionId) {
       return new Observable(observer => {
         observer.next(false);
