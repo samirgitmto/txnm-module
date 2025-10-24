@@ -107,6 +107,17 @@ export class AuthService {
   //   });
   // }
 
+
+  // auth.service.ts
+logout(): Observable<void> {
+  return new Observable(observer => {
+    this.userSubject.next(null);
+    this.errorSubject.next(null);
+    observer.next();
+    observer.complete();
+  });
+}
+
   getCurrentUser(): User | null {
     return this.userSubject.value;
   }
